@@ -173,7 +173,6 @@ def _get_floating_ip(module, neutron, fixed_ip_address):
 
 def _assign_floating_ip(neutron, module, port_id, net_id):
     kwargs = {
-            'port_id': None,
             'floating_network_id': net_id
     }
     try:
@@ -181,10 +180,12 @@ def _assign_floating_ip(neutron, module, port_id, net_id):
     except Exception as e:
         module.fail_json(msg = "error in fetching the floatingips's %s" % e.message)
 
-    if not ips['floatingips']:
+    fip = next((fip for fip in ips['floatingips'] if fip['port_id'] is None), None)
+
+    if fip is None:
         _create_floating_ip(neutron, module, port_id, net_id)
     else:
-        _update_floating_ip(neutron, module, port_id, ips['floatingips'][0]['id'])
+        _update_floating_ip(neutron, module, port_id, fip['id'])
 
 def _create_floating_ip(neutron, module, port_id, net_id):
     kwargs = {
